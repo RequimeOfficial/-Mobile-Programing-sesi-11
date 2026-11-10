@@ -1,6 +1,7 @@
 // lib/views/auth/register_view.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../../core/routes/app_router.dart';
 import '../../viewmodels/auth_vm.dart';
 import '../../widgets/auth_scaffold.dart';
@@ -31,7 +32,9 @@ class _RegisterViewState extends ConsumerState<RegisterView> {
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
-    final ok = await ref.read(authProvider.notifier).register(
+    final ok = await ref
+        .read(authProvider.notifier)
+        .register(
           _nameCtrl.text.trim(),
           _emailCtrl.text.trim(),
           _passCtrl.text,
@@ -56,15 +59,22 @@ class _RegisterViewState extends ConsumerState<RegisterView> {
             children: [
               TextFormField(
                 controller: _nameCtrl,
-                decoration: InputDecoration(labelText: 'Nama', errorText: fe['name']),
+                decoration: InputDecoration(
+                  labelText: 'Nama',
+                  errorText: fe['name'],
+                ),
                 textInputAction: TextInputAction.next,
                 maxLength: 100, // sesuai validasi backend: max:100
-                validator: (v) => (v == null || v.trim().isEmpty) ? 'Nama wajib diisi' : null,
+                validator: (v) =>
+                    (v == null || v.trim().isEmpty) ? 'Nama wajib diisi' : null,
               ),
               const SizedBox(height: 4),
               TextFormField(
                 controller: _emailCtrl,
-                decoration: InputDecoration(labelText: 'Email', errorText: fe['email']),
+                decoration: InputDecoration(
+                  labelText: 'Email',
+                  errorText: fe['email'],
+                ),
                 keyboardType: TextInputType.emailAddress,
                 textInputAction: TextInputAction.next,
                 validator: (v) {
@@ -83,25 +93,35 @@ class _RegisterViewState extends ConsumerState<RegisterView> {
                   labelText: 'Password',
                   errorText: fe['password'],
                   suffixIcon: IconButton(
-                    icon: Icon(_obscure ? Icons.visibility : Icons.visibility_off),
+                    icon: Icon(
+                      _obscure ? Icons.visibility : Icons.visibility_off,
+                    ),
                     onPressed: () => setState(() => _obscure = !_obscure),
                   ),
                 ),
                 obscureText: _obscure,
                 textInputAction: TextInputAction.next,
-                validator: (v) => (v == null || v.length < 8) ? 'Minimal 8 karakter' : null,
+                validator: (v) =>
+                    (v == null || v.length < 8) ? 'Minimal 8 karakter' : null,
               ),
               const SizedBox(height: 12),
               TextFormField(
                 controller: _confirmCtrl,
-                decoration: const InputDecoration(labelText: 'Konfirmasi Password'),
+                decoration: const InputDecoration(
+                  labelText: 'Konfirmasi Password',
+                ),
                 obscureText: _obscure,
                 textInputAction: TextInputAction.done,
                 onFieldSubmitted: (_) => _submit(),
-                validator: (v) => v != _passCtrl.text ? 'Password tidak cocok' : null,
+                validator: (v) =>
+                    v != _passCtrl.text ? 'Password tidak cocok' : null,
               ),
               const SizedBox(height: 24),
-              LoadingButton(loading: auth.loading, label: 'Daftar', onPressed: _submit),
+              LoadingButton(
+                loading: auth.loading,
+                label: 'Daftar',
+                onPressed: _submit,
+              ),
               const SizedBox(height: 12),
               TextButton(
                 onPressed: () {

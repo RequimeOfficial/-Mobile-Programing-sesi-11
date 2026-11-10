@@ -1,6 +1,7 @@
 // lib/views/auth/splash_view.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../../core/routes/app_router.dart';
 import '../../viewmodels/auth_vm.dart';
 
@@ -19,7 +20,10 @@ class _SplashViewState extends ConsumerState<SplashView> {
     Future.microtask(() async {
       final loggedIn = await ref.read(authProvider.notifier).restoreSession();
       if (!mounted) return;
-      Navigator.pushReplacementNamed(context, loggedIn ? AppRoutes.books : AppRoutes.login);
+      Navigator.pushReplacementNamed(
+        context,
+        loggedIn ? AppRoutes.books : AppRoutes.login,
+      );
     });
   }
 

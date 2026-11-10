@@ -1,10 +1,13 @@
 // lib/views/books/book_form_dialog.dart
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
 import '../../core/network/api_exception.dart';
 import '../../models/book_model.dart';
 
-typedef BookSubmit = Future<ApiException?> Function(Map<String, dynamic> payload);
+typedef BookSubmit = Future<ApiException?> Function(
+  Map<String, dynamic> payload,
+);
 
 /// Form tambah/edit buku. Dialog tetap terbuka jika backend menolak
 /// (mis. ISBN duplikat) dan menampilkan pesan error di field terkait.
@@ -49,7 +52,13 @@ class _BookFormDialogState extends State<BookFormDialog> {
   @override
   void dispose() {
     for (final c in [
-      _titleCtrl, _authorCtrl, _publisherCtrl, _isbnCtrl, _yearCtrl, _stockCtrl, _descCtrl,
+      _titleCtrl,
+      _authorCtrl,
+      _publisherCtrl,
+      _isbnCtrl,
+      _yearCtrl,
+      _stockCtrl,
+      _descCtrl,
     ]) {
       c.dispose();
     }
@@ -106,13 +115,35 @@ class _BookFormDialogState extends State<BookFormDialog> {
                 if (_error != null)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 12),
-                    child: Text(_error!,
-                        style: TextStyle(color: Theme.of(context).colorScheme.error)),
+                    child: Text(
+                      _error!,
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.error,
+                      ),
+                    ),
                   ),
-                _field(_titleCtrl, 'Judul', 'title', required: true, maxLength: 255),
-                _field(_authorCtrl, 'Penulis', 'author', required: true, maxLength: 255),
+                _field(
+                  _titleCtrl,
+                  'Judul',
+                  'title',
+                  required: true,
+                  maxLength: 255,
+                ),
+                _field(
+                  _authorCtrl,
+                  'Penulis',
+                  'author',
+                  required: true,
+                  maxLength: 255,
+                ),
                 _field(_publisherCtrl, 'Penerbit', 'publisher', maxLength: 255),
-                _field(_isbnCtrl, 'ISBN', 'isbn', required: true, maxLength: 20),
+                _field(
+                  _isbnCtrl,
+                  'ISBN',
+                  'isbn',
+                  required: true,
+                  maxLength: 20,
+                ),
                 _field(
                   _yearCtrl,
                   'Tahun Terbit',
@@ -133,7 +164,8 @@ class _BookFormDialogState extends State<BookFormDialog> {
                   'stock',
                   required: true,
                   digitsOnly: true,
-                  validator: (v) => int.tryParse(v) == null ? 'Stok harus angka ≥ 0' : null,
+                  validator: (v) =>
+                      int.tryParse(v) == null ? 'Stok harus angka ≥ 0' : null,
                 ),
                 _field(_descCtrl, 'Deskripsi', 'description', maxLines: 3),
               ],
@@ -149,7 +181,11 @@ class _BookFormDialogState extends State<BookFormDialog> {
         FilledButton(
           onPressed: _saving ? null : _submit,
           child: _saving
-              ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2))
+              ? const SizedBox(
+                  height: 18,
+                  width: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
               : Text(isEdit ? 'Simpan' : 'Tambah'),
         ),
       ],
@@ -177,7 +213,9 @@ class _BookFormDialogState extends State<BookFormDialog> {
           counterText: '',
         ),
         keyboardType: digitsOnly ? TextInputType.number : TextInputType.text,
-        inputFormatters: digitsOnly ? [FilteringTextInputFormatter.digitsOnly] : null,
+        inputFormatters: digitsOnly
+            ? [FilteringTextInputFormatter.digitsOnly]
+            : null,
         maxLines: maxLines,
         maxLength: maxLength,
         validator: (v) {

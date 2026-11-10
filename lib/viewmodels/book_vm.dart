@@ -1,5 +1,6 @@
 // lib/viewmodels/book_vm.dart
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../core/network/api_exception.dart';
 import '../models/book_model.dart';
 import '../repositories/book_repository.dart';
@@ -38,17 +39,16 @@ class BookState {
     int? page,
     int? lastPage,
     int? total,
-  }) =>
-      BookState(
-        books: books ?? this.books,
-        loading: loading ?? this.loading,
-        loadingMore: loadingMore ?? this.loadingMore,
-        error: clearError ? null : (error ?? this.error),
-        search: search ?? this.search,
-        page: page ?? this.page,
-        lastPage: lastPage ?? this.lastPage,
-        total: total ?? this.total,
-      );
+  }) => BookState(
+    books: books ?? this.books,
+    loading: loading ?? this.loading,
+    loadingMore: loadingMore ?? this.loadingMore,
+    error: clearError ? null : (error ?? this.error),
+    search: search ?? this.search,
+    page: page ?? this.page,
+    lastPage: lastPage ?? this.lastPage,
+    total: total ?? this.total,
+  );
 }
 
 class BookNotifier extends Notifier<BookState> {
@@ -63,7 +63,12 @@ class BookNotifier extends Notifier<BookState> {
   Future<void> load({String? search}) async {
     final query = (search ?? state.search).trim();
     final id = ++_requestId; // abaikan respons lama jika user mencari lagi
-    state = state.copyWith(loading: true, loadingMore: false, clearError: true, search: query);
+    state = state.copyWith(
+      loading: true,
+      loadingMore: false,
+      clearError: true,
+      search: query,
+    );
     try {
       final result = await _repo.getBooks(search: query, page: 1);
       if (id != _requestId) return;
@@ -86,11 +91,17 @@ class BookNotifier extends Notifier<BookState> {
     final id = _requestId;
     state = state.copyWith(loadingMore: true);
     try {
-      final result = await _repo.getBooks(search: state.search, page: state.page + 1);
+      final result = await _repo.getBooks(
+        search: state.search,
+        page: state.page + 1,
+      );
       if (id != _requestId) return null;
       final known = state.books.map((b) => b.id).toSet();
       state = state.copyWith(
-        books: [...state.books, ...result.books.where((b) => !known.contains(b.id))],
+        books: [
+          ...state.books,
+          ...result.books.where((b) => !known.contains(b.id)),
+        ],
         loadingMore: false,
         page: result.currentPage,
         lastPage: result.lastPage,
@@ -107,7 +118,10 @@ class BookNotifier extends Notifier<BookState> {
   Future<ApiException?> create(Map<String, dynamic> payload) async {
     try {
       final book = await _repo.createBook(payload);
-      state = state.copyWith(books: [book, ...state.books], total: state.total + 1);
+      state = state.copyWith(
+        books: [book, ...state.books],
+        total: state.total + 1,
+      );
       return null;
     } on ApiException catch (e) {
       return e;
@@ -147,4 +161,6 @@ class BookNotifier extends Notifier<BookState> {
   }
 }
 
-final bookProvider = NotifierProvider<BookNotifier, BookState>(BookNotifier.new);
+final bookProvider = NotifierProvider<BookNotifier, BookState>(
+  BookNotifier.new,
+);

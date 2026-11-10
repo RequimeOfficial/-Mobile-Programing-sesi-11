@@ -1,13 +1,17 @@
 // lib/views/books/books_view.dart
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../../core/routes/app_router.dart';
 import '../../models/book_model.dart';
 import '../../viewmodels/auth_vm.dart';
 import '../../viewmodels/book_vm.dart';
 import '../../widgets/book_card.dart';
 import '../../widgets/responsive_layout.dart';
-import 'book_form_dialog.dart';
+import '../common/session_actions.dart';
+import 'book_actions.dart';
 
 class BooksView extends ConsumerStatefulWidget {
   const BooksView({super.key});
@@ -19,6 +23,7 @@ class BooksView extends ConsumerStatefulWidget {
 class _BooksViewState extends ConsumerState<BooksView> {
   final _searchCtrl = TextEditingController();
   final _scrollCtrl = ScrollController();
+  Timer? _debounce; // Tugas C: pencarian otomatis
 
   BookNotifier get _vm => ref.read(bookProvider.notifier);
 
@@ -31,6 +36,7 @@ class _BooksViewState extends ConsumerState<BooksView> {
 
   @override
   void dispose() {
+    _debounce?.cancel();
     _searchCtrl.dispose();
     _scrollCtrl.dispose();
     super.dispose();
@@ -45,60 +51,35 @@ class _BooksViewState extends ConsumerState<BooksView> {
     if (err != null) _toast(err, isError: true);
   }
 
-  void _toast(String msg, {bool isError = false}) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(
-        content: Text(msg),
-        backgroundColor: isError ? Theme.of(context).colorScheme.error : null,
-      ));
+  void _toast(String msg, {bool isError = false}) =>
+      showToast(context, msg, isError: isError);
+
+  Future<void> _openForm([BookModel? book]) => openBookForm(context, ref, book);
+
+  Future<void> _confirmDelete(BookModel book) =>
+      confirmDeleteBook(context, ref, book);
+
+  Future<void> _logout() => logoutAndGoToLogin(context, ref);
+
+  void _openProfile() => Navigator.pushNamed(context, AppRoutes.profile);
+
+  /// Tugas C – debounce: request baru dikirim 500 ms setelah user berhenti
+  /// mengetik. Setiap huruf baru membatalkan timer sebelumnya, sehingga
+  /// mengetik "hirata" hanya menghasilkan 1 request, bukan 6.
+  void _onSearchChanged(String value) {
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 500), () {
+      if (value.trim() == ref.read(bookProvider).search) {
+        return; // tidak berubah
+      }
+      _vm.load(search: value);
+    });
   }
 
-  Future<void> _openForm([BookModel? book]) async {
-    final saved = await showDialog<bool>(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => BookFormDialog(
-        book: book,
-        onSubmit: (payload) =>
-            book == null ? _vm.create(payload) : _vm.update(book.id, payload),
-      ),
-    );
-    if (saved == true) {
-      _toast(book == null ? 'Buku berhasil ditambahkan' : 'Perubahan disimpan');
-    }
-  }
-
-  Future<void> _confirmDelete(BookModel book) async {
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (dialogCtx) => AlertDialog(
-        title: const Text('Hapus Buku'),
-        content: Text('Hapus "${book.title}"?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogCtx, false),
-            child: const Text('Batal'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(dialogCtx, true),
-            style: FilledButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('Hapus'),
-          ),
-        ],
-      ),
-    );
-    if (ok != true) return;
-    final err = await _vm.delete(book.id);
-    _toast(err ?? 'Buku dihapus', isError: err != null);
-  }
-
-  Future<void> _logout() async {
-    await ref.read(authProvider.notifier).logout();
-    _vm.reset();
-    if (!mounted) return;
-    Navigator.pushNamedAndRemoveUntil(context, AppRoutes.login, (_) => false);
+  /// Enter / tombol hapus tetap langsung mencari (tanpa menunggu debounce).
+  void _searchNow(String value) {
+    _debounce?.cancel();
+    _vm.load(search: value);
   }
 
   Widget _body(BookState state) {
@@ -136,16 +117,23 @@ class _BooksViewState extends ConsumerState<BooksView> {
               children: [
                 const SizedBox(height: 120),
                 Center(
-                  child: Text(state.search.isEmpty
-                      ? 'Belum ada buku.'
-                      : 'Tidak ada buku untuk "${state.search}".'),
+                  child: Text(
+                    state.search.isEmpty
+                        ? 'Belum ada buku.'
+                        : 'Tidak ada buku untuk "${state.search}".',
+                  ),
                 ),
               ],
             )
           : ListView.separated(
               controller: _scrollCtrl,
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 96), // ruang untuk FAB
+              padding: const EdgeInsets.fromLTRB(
+                16,
+                8,
+                16,
+                96,
+              ), // ruang untuk FAB
               itemCount: state.books.length + 1,
               separatorBuilder: (_, _) => const SizedBox(height: 4),
               itemBuilder: (ctx, i) {
@@ -171,14 +159,19 @@ class _BooksViewState extends ConsumerState<BooksView> {
     }
     if (state.hasMore) {
       return Center(
-        child: TextButton(onPressed: _loadMore, child: const Text('Muat lebih banyak')),
+        child: TextButton(
+          onPressed: _loadMore,
+          child: const Text('Muat lebih banyak'),
+        ),
       );
     }
     return Padding(
       padding: const EdgeInsets.all(12),
       child: Center(
-        child: Text('${state.books.length} dari ${state.total} buku',
-            style: Theme.of(context).textTheme.bodySmall),
+        child: Text(
+          '${state.books.length} dari ${state.total} buku',
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
       ),
     );
   }
@@ -188,11 +181,13 @@ class _BooksViewState extends ConsumerState<BooksView> {
     final state = ref.watch(bookProvider);
     // Jika daftar sudah tampil lalu muat ulang gagal, cukup tampilkan snackbar.
     ref.listen(bookProvider.select((s) => s.error), (_, next) {
-      if (next != null && ref.read(bookProvider).books.isNotEmpty) _toast(next, isError: true);
+      if (next != null && ref.read(bookProvider).books.isNotEmpty) {
+        _toast(next, isError: true);
+      }
     });
     final userName = ref.watch(authProvider.select((s) => s.user?.name)) ?? '';
 
-    final appBar = AppBar(
+    AppBar appBar({required bool mobile}) => AppBar(
       title: const Text('Daftar Buku'),
       bottom: state.loading && state.books.isNotEmpty
           ? const PreferredSize(
@@ -206,7 +201,18 @@ class _BooksViewState extends ConsumerState<BooksView> {
           tooltip: 'Muat ulang',
           onPressed: state.loading ? null : () => _vm.load(),
         ),
-        IconButton(icon: const Icon(Icons.logout), tooltip: 'Logout', onPressed: _logout),
+        // Tugas B: tombol profil di AppBar (tampilan HP)
+        if (mobile)
+          IconButton(
+            icon: const Icon(Icons.account_circle),
+            tooltip: 'Profil',
+            onPressed: _openProfile,
+          ),
+        IconButton(
+          icon: const Icon(Icons.logout),
+          tooltip: 'Logout',
+          onPressed: _logout,
+        ),
       ],
     );
 
@@ -216,17 +222,18 @@ class _BooksViewState extends ConsumerState<BooksView> {
         controller: _searchCtrl,
         textInputAction: TextInputAction.search,
         decoration: InputDecoration(
-          hintText: 'Cari judul / penulis… (Enter)',
+          hintText: 'Cari judul / penulis…',
           prefixIcon: const Icon(Icons.search),
           suffixIcon: IconButton(
             icon: const Icon(Icons.clear),
             onPressed: () {
               _searchCtrl.clear();
-              _vm.load(search: '');
+              _searchNow('');
             },
           ),
         ),
-        onSubmitted: (v) => _vm.load(search: v),
+        onChanged: _onSearchChanged,
+        onSubmitted: _searchNow,
       ),
     );
 
@@ -238,13 +245,20 @@ class _BooksViewState extends ConsumerState<BooksView> {
 
     final content = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [searchBar, Expanded(child: _body(state))],
+      children: [
+        searchBar,
+        Expanded(child: _body(state)),
+      ],
     );
 
     return ResponsiveLayout(
-      mobile: Scaffold(appBar: appBar, body: content, floatingActionButton: fab),
+      mobile: Scaffold(
+        appBar: appBar(mobile: true),
+        body: content,
+        floatingActionButton: fab,
+      ),
       desktop: Scaffold(
-        appBar: appBar,
+        appBar: appBar(mobile: false),
         body: Row(
           children: [
             NavigationRail(
@@ -253,24 +267,40 @@ class _BooksViewState extends ConsumerState<BooksView> {
                   icon: Icon(Icons.library_books),
                   label: Text('Buku'),
                 ),
+                // Tugas B: tujuan Profil di NavigationRail (tampilan desktop)
+                NavigationRailDestination(
+                  icon: Icon(Icons.person_outline),
+                  selectedIcon: Icon(Icons.person),
+                  label: Text('Profil'),
+                ),
               ],
               selectedIndex: 0,
+              onDestinationSelected: (i) {
+                if (i == 1) _openProfile();
+              },
               labelType: NavigationRailLabelType.all,
               leading: Padding(
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 child: Column(
                   children: [
                     CircleAvatar(
-                      child: Text(userName.isEmpty ? '?' : userName[0].toUpperCase()),
+                      child: Text(
+                        userName.isEmpty ? '?' : userName[0].toUpperCase(),
+                      ),
                     ),
                     const SizedBox(height: 4),
                     SizedBox(
                       width: 72,
-                      child: Text(userName,
-                          textAlign: TextAlign.center,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                      child: Text(
+                        userName,
+                        textAlign: TextAlign.center,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
                   ],
                 ),

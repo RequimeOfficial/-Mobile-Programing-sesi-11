@@ -1,0 +1,15 @@
+Log request Flutter web (http://localhost:8090) ke backend perpus-api (http://localhost:8000).
+Preflight OPTIONS (CORS) tidak ditampilkan.
+
+=== Sesi 1: login, pencarian (debounce), detail, profil ===
+POST /api/login                                    -> 200
+GET  /api/books?page=1&per_page=15                 -> 200
+--- mengetik "dolore" (6 huruf, jeda 120 ms per huruf) ---
+GET  /api/books?search=dolore&page=1&per_page=15   -> 200   (hanya 1 request)
+GET  /api/me                                       -> 200   (halaman Profil)
+
+=== Sesi 2: register email duplikat, tambah buku ISBN duplikat ===
+POST /api/register                                 -> 422   (The email has already been taken.)
+POST /api/login                                    -> 200
+GET  /api/books?page=1&per_page=15                 -> 200
+POST /api/books                                    -> 422   (The isbn has already been taken.)

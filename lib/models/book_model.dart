@@ -23,25 +23,25 @@ class BookModel {
   });
 
   factory BookModel.fromJson(Map<String, dynamic> j) => BookModel(
-        id: _toInt(j['id']),
-        title: j['title'] as String,
-        author: j['author'] as String,
-        publisher: j['publisher'] as String?,
-        isbn: j['isbn'] as String,
-        publishedYear: _toInt(j['published_year']),
-        stock: _toInt(j['stock']),
-        description: j['description'] as String?,
-      );
+    id: _toInt(j['id']),
+    title: j['title'] as String,
+    author: j['author'] as String,
+    publisher: j['publisher'] as String?,
+    isbn: j['isbn'] as String,
+    publishedYear: _toInt(j['published_year']),
+    stock: _toInt(j['stock']),
+    description: j['description'] as String?,
+  );
 
   Map<String, dynamic> toJson() => {
-        'title': title,
-        'author': author,
-        'publisher': publisher,
-        'isbn': isbn,
-        'published_year': publishedYear,
-        'stock': stock,
-        'description': description,
-      };
+    'title': title,
+    'author': author,
+    'publisher': publisher,
+    'isbn': isbn,
+    'published_year': publishedYear,
+    'stock': stock,
+    'description': description,
+  };
 }
 
 /// Satu halaman hasil `GET /api/books` (Laravel paginator: data + meta).

@@ -8,11 +8,14 @@ class BookRepository {
   BookRepository(this._api);
 
   Future<BookPage> getBooks({String? search, int page = 1}) async {
-    final res = await _api.get(ApiConstants.books, params: {
-      if (search != null && search.isNotEmpty) 'search': search,
-      'page': page,
-      'per_page': ApiConstants.perPage,
-    });
+    final res = await _api.get(
+      ApiConstants.books,
+      params: {
+        if (search != null && search.isNotEmpty) 'search': search,
+        'page': page,
+        'per_page': ApiConstants.perPage,
+      },
+    );
     return BookPage.fromJson(res.data as Map<String, dynamic>);
   }
 

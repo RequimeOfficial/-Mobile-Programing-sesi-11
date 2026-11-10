@@ -11,17 +11,17 @@ import 'package:perpus_app/viewmodels/providers.dart';
 import 'package:perpus_app/views/books/book_form_dialog.dart';
 
 Map<String, dynamic> bookJson(int id, {String title = 'Buku'}) => {
-      'id': id,
-      'title': '$title $id',
-      'author': 'Penulis',
-      'publisher': null,
-      'isbn': 'ISBN$id',
-      'published_year': 2005,
-      'stock': 3,
-      'description': null,
-      'created_at': '2026-11-09T14:20:25.000000Z',
-      'updated_at': '2026-11-09T14:20:25.000000Z',
-    };
+  'id': id,
+  'title': '$title $id',
+  'author': 'Penulis',
+  'publisher': null,
+  'isbn': 'ISBN$id',
+  'published_year': 2005,
+  'stock': 3,
+  'description': null,
+  'created_at': '2026-11-09T14:20:25.000000Z',
+  'updated_at': '2026-11-09T14:20:25.000000Z',
+};
 
 /// Repository palsu: 2 halaman data, create bisa disetel gagal (ISBN duplikat).
 class FakeBookRepository extends BookRepository {
@@ -30,17 +30,23 @@ class FakeBookRepository extends BookRepository {
 
   @override
   Future<BookPage> getBooks({String? search, int page = 1}) async => BookPage(
-        books: [for (var i = 1; i <= 2; i++) BookModel.fromJson(bookJson((page - 1) * 2 + i))],
-        currentPage: page,
-        lastPage: 2,
-        total: 4,
-      );
+    books: [
+      for (var i = 1; i <= 2; i++)
+        BookModel.fromJson(bookJson((page - 1) * 2 + i)),
+    ],
+    currentPage: page,
+    lastPage: 2,
+    total: 4,
+  );
 
   @override
   Future<BookModel> createBook(Map<String, dynamic> payload) async {
     if (failCreate) {
-      throw const ApiException('The isbn has already been taken.',
-          statusCode: 422, fieldErrors: {'isbn': 'The isbn has already been taken.'});
+      throw const ApiException(
+        'The isbn has already been taken.',
+        statusCode: 422,
+        fieldErrors: {'isbn': 'The isbn has already been taken.'},
+      );
     }
     return BookModel.fromJson({...bookJson(99), ...payload});
   }
@@ -64,29 +70,33 @@ void main() {
     });
 
     test('ApiException membaca error validasi 422', () {
-      final e = ApiException.fromDio(DioException(
-        requestOptions: RequestOptions(path: '/books'),
-        type: DioExceptionType.badResponse,
-        response: Response(
+      final e = ApiException.fromDio(
+        DioException(
           requestOptions: RequestOptions(path: '/books'),
-          statusCode: 422,
-          data: {
-            'message': 'The isbn has already been taken.',
-            'errors': {
-              'isbn': ['The isbn has already been taken.'],
+          type: DioExceptionType.badResponse,
+          response: Response(
+            requestOptions: RequestOptions(path: '/books'),
+            statusCode: 422,
+            data: {
+              'message': 'The isbn has already been taken.',
+              'errors': {
+                'isbn': ['The isbn has already been taken.'],
+              },
             },
-          },
+          ),
         ),
-      ));
+      );
       expect(e.statusCode, 422);
       expect(e.fieldErrors['isbn'], 'The isbn has already been taken.');
     });
 
     test('ApiException memberi pesan jelas saat server mati', () {
-      final e = ApiException.fromDio(DioException(
-        requestOptions: RequestOptions(path: '/login'),
-        type: DioExceptionType.connectionError,
-      ));
+      final e = ApiException.fromDio(
+        DioException(
+          requestOptions: RequestOptions(path: '/login'),
+          type: DioExceptionType.connectionError,
+        ),
+      );
       expect(e.message, contains('Tidak dapat terhubung'));
     });
   });
@@ -115,16 +125,19 @@ void main() {
       expect(s.hasMore, isFalse);
     });
 
-    test('create gagal tidak menghapus daftar & mengembalikan error field', () async {
-      final vm = container.read(bookProvider.notifier);
-      await vm.load();
-      repo.failCreate = true;
-      final err = await vm.create({'isbn': 'ISBN1'});
-      expect(err?.fieldErrors['isbn'], isNotNull);
-      final s = container.read(bookProvider);
-      expect(s.books.length, 2);
-      expect(s.error, isNull);
-    });
+    test(
+      'create gagal tidak menghapus daftar & mengembalikan error field',
+      () async {
+        final vm = container.read(bookProvider.notifier);
+        await vm.load();
+        repo.failCreate = true;
+        final err = await vm.create({'isbn': 'ISBN1'});
+        expect(err?.fieldErrors['isbn'], isNotNull);
+        final s = container.read(bookProvider);
+        expect(s.books.length, 2);
+        expect(s.error, isNull);
+      },
+    );
 
     test('delete menghapus buku dari daftar', () async {
       final vm = container.read(bookProvider.notifier);
@@ -134,17 +147,26 @@ void main() {
     });
   });
 
-  testWidgets('Form buku: validasi lokal & error ISBN dari backend tampil', (tester) async {
+  testWidgets('Form buku: validasi lokal & error ISBN dari backend tampil', (
+    tester,
+  ) async {
     Map<String, dynamic>? sent;
-    await tester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: BookFormDialog(onSubmit: (payload) async {
-          sent = payload;
-          return const ApiException('dup',
-              statusCode: 422, fieldErrors: {'isbn': 'The isbn has already been taken.'});
-        }),
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: BookFormDialog(
+            onSubmit: (payload) async {
+              sent = payload;
+              return const ApiException(
+                'dup',
+                statusCode: 422,
+                fieldErrors: {'isbn': 'The isbn has already been taken.'},
+              );
+            },
+          ),
+        ),
       ),
-    ));
+    );
 
     // Submit kosong → validasi lokal, tidak memanggil API
     await tester.tap(find.text('Tambah'));

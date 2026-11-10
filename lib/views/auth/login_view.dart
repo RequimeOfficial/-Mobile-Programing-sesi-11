@@ -1,6 +1,7 @@
 // lib/views/auth/login_view.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../../core/routes/app_router.dart';
 import '../../viewmodels/auth_vm.dart';
 import '../../widgets/auth_scaffold.dart';
@@ -75,7 +76,9 @@ class _LoginViewState extends ConsumerState<LoginView> {
                     labelText: 'Password',
                     errorText: auth.fieldErrors['password'],
                     suffixIcon: IconButton(
-                      icon: Icon(_obscure ? Icons.visibility : Icons.visibility_off),
+                      icon: Icon(
+                        _obscure ? Icons.visibility : Icons.visibility_off,
+                      ),
                       onPressed: () => setState(() => _obscure = !_obscure),
                     ),
                   ),
@@ -83,10 +86,15 @@ class _LoginViewState extends ConsumerState<LoginView> {
                   autofillHints: const [AutofillHints.password],
                   textInputAction: TextInputAction.done,
                   onFieldSubmitted: (_) => _submit(),
-                  validator: (v) => (v == null || v.isEmpty) ? 'Password wajib diisi' : null,
+                  validator: (v) =>
+                      (v == null || v.isEmpty) ? 'Password wajib diisi' : null,
                 ),
                 const SizedBox(height: 24),
-                LoadingButton(loading: auth.loading, label: 'Masuk', onPressed: _submit),
+                LoadingButton(
+                  loading: auth.loading,
+                  label: 'Masuk',
+                  onPressed: _submit,
+                ),
                 const SizedBox(height: 12),
                 TextButton(
                   onPressed: () {

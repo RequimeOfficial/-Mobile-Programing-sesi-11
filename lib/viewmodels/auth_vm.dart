@@ -1,5 +1,6 @@
 // lib/viewmodels/auth_vm.dart
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../core/network/api_exception.dart';
 import '../models/user_model.dart';
 import '../repositories/auth_repository.dart';
@@ -43,9 +44,19 @@ class AuthNotifier extends Notifier<AuthState> {
   Future<bool> login(String email, String password) =>
       _run(() => _repo.login(email: email, password: password));
 
-  Future<bool> register(String name, String email, String password, String confirm) =>
-      _run(() => _repo.register(
-          name: name, email: email, password: password, passwordConfirmation: confirm));
+  Future<bool> register(
+    String name,
+    String email,
+    String password,
+    String confirm,
+  ) => _run(
+    () => _repo.register(
+      name: name,
+      email: email,
+      password: password,
+      passwordConfirmation: confirm,
+    ),
+  );
 
   Future<void> logout() async {
     await _repo.logout();
@@ -72,4 +83,6 @@ class AuthNotifier extends Notifier<AuthState> {
   }
 }
 
-final authProvider = NotifierProvider<AuthNotifier, AuthState>(AuthNotifier.new);
+final authProvider = NotifierProvider<AuthNotifier, AuthState>(
+  AuthNotifier.new,
+);

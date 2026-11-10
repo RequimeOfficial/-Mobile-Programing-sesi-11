@@ -8,7 +8,12 @@ class AuthScaffold extends StatelessWidget {
   final String? error;
   final List<Widget> children;
 
-  const AuthScaffold({super.key, required this.title, this.error, required this.children});
+  const AuthScaffold({
+    super.key,
+    required this.title,
+    this.error,
+    required this.children,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -23,11 +28,17 @@ class AuthScaffold extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Icon(Icons.menu_book_rounded, size: 64, color: scheme.primary),
+                  Icon(
+                    Icons.menu_book_rounded,
+                    size: 64,
+                    color: scheme.primary,
+                  ),
                   const SizedBox(height: 8),
-                  Text(title,
-                      style: Theme.of(context).textTheme.headlineSmall,
-                      textAlign: TextAlign.center),
+                  Text(
+                    title,
+                    style: Theme.of(context).textTheme.headlineSmall,
+                    textAlign: TextAlign.center,
+                  ),
                   const SizedBox(height: 32),
                   if (error != null) ...[
                     Container(
@@ -36,7 +47,10 @@ class AuthScaffold extends StatelessWidget {
                         color: scheme.errorContainer,
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: Text(error!, style: TextStyle(color: scheme.onErrorContainer)),
+                      child: Text(
+                        error!,
+                        style: TextStyle(color: scheme.onErrorContainer),
+                      ),
                     ),
                     const SizedBox(height: 16),
                   ],
@@ -68,7 +82,11 @@ class LoadingButton extends StatelessWidget {
     return FilledButton(
       onPressed: loading ? null : onPressed,
       child: loading
-          ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))
+          ? const SizedBox(
+              height: 20,
+              width: 20,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
           : Text(label),
     );
   }

@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import 'core/routes/app_router.dart';
 import 'core/theme/app_theme.dart';
+import 'models/book_model.dart';
 import 'views/auth/login_view.dart';
 import 'views/auth/register_view.dart';
 import 'views/auth/splash_view.dart';
+import 'views/books/book_detail_view.dart';
 import 'views/books/books_view.dart';
+import 'views/profile/profile_view.dart';
 
 void main() {
   runApp(const ProviderScope(child: PerpusApp()));
@@ -27,6 +31,13 @@ class PerpusApp extends StatelessWidget {
         AppRoutes.login: (_) => const LoginView(),
         AppRoutes.register: (_) => const RegisterView(),
         AppRoutes.books: (_) => const BooksView(),
+        // Tugas A: detail buku menerima BookModel lewat arguments
+        AppRoutes.bookDetail: (ctx) {
+          final book = ModalRoute.of(ctx)!.settings.arguments as BookModel;
+          return BookDetailView(book: book);
+        },
+        // Tugas B: profil user (GET /api/me)
+        AppRoutes.profile: (_) => const ProfileView(),
       },
     );
   }
